@@ -307,6 +307,12 @@ function Magnify.WorldMapButton_OnUpdate(self, elapsed)
 			WorldMapPlayer.Icon:SetRotation(PlayerArrowFrame:GetFacing())
 			WorldMapPlayer.Icon:SetSize(Magnify.PLAYER_ARROW_SIZE * (mapsterArrowScale or 1), Magnify.PLAYER_ARROW_SIZE * (mapsterArrowScale or 1))
 		end
+		-- Position the player arrow correctly relative to the scaled map
+		local detailWidth = WorldMapDetailFrame:GetWidth()
+		local detailHeight = WorldMapDetailFrame:GetHeight()
+		local scale = WorldMapDetailFrame:GetScale()
+		WorldMapPlayer:ClearAllPoints()
+		WorldMapPlayer:SetPoint("CENTER", WorldMapDetailFrame, "TOPLEFT", playerX * detailWidth * scale, -playerY * detailHeight * scale)
 	end
 
 	-- Apply class coloring to party/raid members if option is enabled
