@@ -250,6 +250,20 @@ function Magnify.SetupWorldMapFrame()
 			WorldMapBlobFrame:SetAllPoints(WorldMapDetailFrame)
 		end
 		if WorldMapPlayer:GetParent() ~= WorldMapDetailFrame then WorldMapPlayer:SetParent(WorldMapDetailFrame) end
+
+		-- Parent party and raid icons to detail frame for correct relative positioning
+		for i = 1, MAX_PARTY_MEMBERS do
+			local partyFrame = _G["WorldMapParty" .. i]
+			if partyFrame and partyFrame:GetParent() ~= WorldMapDetailFrame then
+				partyFrame:SetParent(WorldMapDetailFrame)
+			end
+		end
+		for i = 1, MAX_RAID_MEMBERS do
+			local raidFrame = _G["WorldMapRaid" .. i]
+			if raidFrame and raidFrame:GetParent() ~= WorldMapDetailFrame then
+				raidFrame:SetParent(WorldMapDetailFrame)
+			end
+		end
 	end
 
 	updatePointRelativeTo(WorldMapQuestScrollFrame, WorldMapScrollFrame);
@@ -313,6 +327,49 @@ function Magnify.WorldMapButton_OnUpdate(self, elapsed)
 		local scale = WorldMapDetailFrame:GetScale()
 		WorldMapPlayer:ClearAllPoints()
 		WorldMapPlayer:SetPoint("CENTER", WorldMapDetailFrame, "TOPLEFT", playerX * detailWidth * scale, -playerY * detailHeight * scale)
+
+		-- Hide default player texture every frame to ensure no duplicate
+		if WorldMapPlayer.Player then WorldMapPlayer.Player:Hide() end
+		if WorldMapPlayer.texture then WorldMapPlayer.texture:Hide() end
+	end
+
+	-- Update party and raid icon positions to prevent shifting on zoom
+	local detailWidth = WorldMapDetailFrame:GetWidth()
+	local detailHeight = WorldMapDetailFrame:GetHeight()
+	local scale = WorldMapDetailFrame:GetScale()
+
+	if WorldMapScrollFrame.zoomedIn then
+		if GetNumRaidMembers() == 0 then
+			-- Party mode
+			for i = 1, MAX_PARTY_MEMBERS do
+				local unit = "party" .. i
+				if UnitExists(unit) then
+					local icon = _G["WorldMapParty" .. i]
+					if icon then
+						local x, y = GetPlayerMapPosition(unit)
+						if x > 0 and y > 0 then
+							icon:ClearAllPoints()
+							icon:SetPoint("CENTER", WorldMapDetailFrame, "TOPLEFT", x * detailWidth * scale, -y * detailHeight * scale)
+						end
+					end
+				end
+			end
+		else
+			-- Raid mode
+			for i = 1, MAX_RAID_MEMBERS do
+				local unit = "raid" .. i
+				if UnitExists(unit) then
+					local icon = _G["WorldMapRaid" .. i]
+					if icon then
+						local x, y = GetPlayerMapPosition(unit)
+						if x > 0 and y > 0 then
+							icon:ClearAllPoints()
+							icon:SetPoint("CENTER", WorldMapDetailFrame, "TOPLEFT", x * detailWidth * scale, -y * detailHeight * scale)
+						end
+					end
+				end
+			end
+		end
 	end
 
 	-- Apply class coloring to party/raid members if option is enabled
@@ -460,6 +517,14 @@ function Magnify.OnFirstLoad()
 	WorldMapPlayer.Icon:SetSize(Magnify.PLAYER_ARROW_SIZE, Magnify.PLAYER_ARROW_SIZE)
 	WorldMapPlayer.Icon:SetPoint("CENTER", 0, 0)
 	WorldMapPlayer.Icon:SetTexture('Interface\\AddOns\\' .. ADDON_NAME .. '\\assets\\WorldMapArrow')
+
+	-- Hide default player texture to avoid duplicate
+	if WorldMapPlayer.Player then
+		WorldMapPlayer.Player:Hide()
+	end
+	if WorldMapPlayer.texture then
+		WorldMapPlayer.texture:Hide()
+	end
 
 	hooksecurefunc("WorldMapFrame_SetFullMapView", Magnify.SetupWorldMapFrame);
 	hooksecurefunc("WorldMapFrame_SetQuestMapView", Magnify.SetupWorldMapFrame);
