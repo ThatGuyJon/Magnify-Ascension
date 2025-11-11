@@ -152,6 +152,8 @@ function Magnify.SetDetailFrameScale(num)
 
 	WorldMapPlayer:SetScale(1 / WorldMapDetailFrame:GetScale())
 	WorldMapDeathRelease:SetScale(1 / WorldMapDetailFrame:GetScale())
+	if PlayerArrowFrame then PlayerArrowFrame:SetScale(1 / WorldMapDetailFrame:GetScale()) end
+	if PlayerArrowEffectFrame then PlayerArrowEffectFrame:SetScale(1 / WorldMapDetailFrame:GetScale()) end
 	WorldMapCorpse:SetScale(1 / WorldMapDetailFrame:GetScale())
 	local numFlags = GetNumBattlefieldFlagPositions()
 	for i = 1, numFlags do
@@ -276,6 +278,12 @@ function Magnify.SetupWorldMapFrame()
 			WorldMapBlobFrame:SetAllPoints(WorldMapDetailFrame)
 		end
 		if WorldMapPlayer:GetParent() ~= WorldMapDetailFrame then WorldMapPlayer:SetParent(WorldMapDetailFrame) end
+		if PlayerArrowFrame and PlayerArrowFrame:GetParent() ~= WorldMapDetailFrame then 
+			PlayerArrowFrame:SetParent(WorldMapDetailFrame) 
+		end
+		if PlayerArrowEffectFrame and PlayerArrowEffectFrame:GetParent() ~= WorldMapDetailFrame then 
+			PlayerArrowEffectFrame:SetParent(WorldMapDetailFrame) 
+		end
 
 		-- Parent party and raid icons to detail frame for correct relative positioning
 		for i = 1, MAX_PARTY_MEMBERS do
@@ -353,6 +361,16 @@ function Magnify.WorldMapButton_OnUpdate(self, elapsed)
 		local scale = WorldMapDetailFrame:GetScale()
 		WorldMapPlayer:ClearAllPoints()
 		WorldMapPlayer:SetPoint("CENTER", WorldMapDetailFrame, "TOPLEFT", playerX * detailWidth * scale, -playerY * detailHeight * scale)
+		-- Position PlayerArrowFrame to match WorldMapPlayer
+		if PlayerArrowFrame then
+			PlayerArrowFrame:ClearAllPoints()
+			PlayerArrowFrame:SetPoint("CENTER", WorldMapDetailFrame, "TOPLEFT", playerX * detailWidth * scale, -playerY * detailHeight * scale)
+		end
+		-- Position PlayerArrowEffectFrame to match WorldMapPlayer
+		if PlayerArrowEffectFrame then
+			PlayerArrowEffectFrame:ClearAllPoints()
+			PlayerArrowEffectFrame:SetPoint("CENTER", WorldMapDetailFrame, "TOPLEFT", playerX * detailWidth * scale, -playerY * detailHeight * scale)
+		end
 
 		-- Hide default player texture every frame to ensure no duplicate
 		if WorldMapPlayer.Player then WorldMapPlayer.Player:Hide() end
