@@ -44,17 +44,43 @@ local function resizePOI(poiButton)
 	if (poiButton) then
 		local _, _, _, x, y = poiButton:GetPoint()
 		local mapster, mapsterPoiScale = Magnify.GetMapster("poiScale")
+		local _, mapsterQuestObjectives = Magnify.GetMapster("questObjectives")
 		if (mapster) then
 			-- Sorry mapster I need to take the wheel
 			mapster.WorldMapFrame_DisplayQuestPOI = function() end
 		end
-		if x ~= nil and y ~= nil then
-			-- Use mapsterPoiScale if available (default 1)
-			local effectivePoiScale = (mapsterPoiScale or 1)
-			local s = WORLDMAP_SETTINGS.size / WorldMapDetailFrame:GetEffectiveScale() * effectivePoiScale
 
-			local posX = x / s -- Simplified
-			local posY = y / s -- Simplified
+		local effectivePoiScale = (mapsterPoiScale or 1)
+		local posX, posY
+
+		-- Determine position based on mode
+		if mapsterQuestObjectives and mapsterQuestObjectives == 1 then
+			-- Mode 1 (Only WorldMap Blobs): Try to get position from normalized coordinates
+			local questId = poiButton.questId
+			if questId then
+				local _, normalizedX, normalizedY = QuestPOIGetIconInfo(questId)
+				if normalizedX and normalizedY then
+					-- Calculate pixel position from normalized coords
+					posX = normalizedX * WorldMapDetailFrame:GetWidth() * WORLDMAP_SETTINGS.size
+					posY = -normalizedY * WorldMapDetailFrame:GetHeight() * WORLDMAP_SETTINGS.size
+				end
+			end
+			-- Fallback to existing position if normalized coords not available
+			if not posX and x ~= nil and y ~= nil then
+				posX = x
+				posY = y
+			end
+		elseif x ~= nil and y ~= nil then
+			-- Modes 0 and 2: Use existing position
+			posX = x
+			posY = y
+		end
+
+		-- Apply scale and position transformation
+		if posX and posY then
+			local s = WORLDMAP_SETTINGS.size / WorldMapDetailFrame:GetEffectiveScale() * effectivePoiScale
+			posX = posX / s
+			posY = posY / s
 			poiButton:SetScale(s)
 			poiButton:SetPoint("CENTER", poiButton:GetParent(), "TOPLEFT", posX, posY)
 
@@ -126,6 +152,8 @@ function Magnify.SetDetailFrameScale(num)
 
 	WorldMapPlayer:SetScale(1 / WorldMapDetailFrame:GetScale())
 	WorldMapDeathRelease:SetScale(1 / WorldMapDetailFrame:GetScale())
+	if PlayerArrowFrame then PlayerArrowFrame:SetScale(1 / WorldMapDetailFrame:GetScale()) end
+	if PlayerArrowEffectFrame then PlayerArrowEffectFrame:SetScale(1 / WorldMapDetailFrame:GetScale()) end
 	WorldMapCorpse:SetScale(1 / WorldMapDetailFrame:GetScale())
 	local numFlags = GetNumBattlefieldFlagPositions()
 	for i = 1, numFlags do
@@ -250,6 +278,12 @@ function Magnify.SetupWorldMapFrame()
 			WorldMapBlobFrame:SetAllPoints(WorldMapDetailFrame)
 		end
 		if WorldMapPlayer:GetParent() ~= WorldMapDetailFrame then WorldMapPlayer:SetParent(WorldMapDetailFrame) end
+		if PlayerArrowFrame and PlayerArrowFrame:GetParent() ~= WorldMapDetailFrame then 
+			PlayerArrowFrame:SetParent(WorldMapDetailFrame) 
+		end
+		if PlayerArrowEffectFrame and PlayerArrowEffectFrame:GetParent() ~= WorldMapDetailFrame then 
+			PlayerArrowEffectFrame:SetParent(WorldMapDetailFrame) 
+		end
 
 		-- Parent party and raid icons to detail frame for correct relative positioning
 		for i = 1, MAX_PARTY_MEMBERS do
@@ -327,6 +361,16 @@ function Magnify.WorldMapButton_OnUpdate(self, elapsed)
 		local scale = WorldMapDetailFrame:GetScale()
 		WorldMapPlayer:ClearAllPoints()
 		WorldMapPlayer:SetPoint("CENTER", WorldMapDetailFrame, "TOPLEFT", playerX * detailWidth * scale, -playerY * detailHeight * scale)
+		-- Position PlayerArrowFrame to match WorldMapPlayer
+		if PlayerArrowFrame then
+			PlayerArrowFrame:ClearAllPoints()
+			PlayerArrowFrame:SetPoint("CENTER", WorldMapDetailFrame, "TOPLEFT", playerX * detailWidth * scale, -playerY * detailHeight * scale)
+		end
+		-- Position PlayerArrowEffectFrame to match WorldMapPlayer
+		if PlayerArrowEffectFrame then
+			PlayerArrowEffectFrame:ClearAllPoints()
+			PlayerArrowEffectFrame:SetPoint("CENTER", WorldMapDetailFrame, "TOPLEFT", playerX * detailWidth * scale, -playerY * detailHeight * scale)
+		end
 
 		-- Hide default player texture every frame to ensure no duplicate
 		if WorldMapPlayer.Player then WorldMapPlayer.Player:Hide() end
