@@ -44,17 +44,43 @@ local function resizePOI(poiButton)
 	if (poiButton) then
 		local _, _, _, x, y = poiButton:GetPoint()
 		local mapster, mapsterPoiScale = Magnify.GetMapster("poiScale")
+		local _, mapsterQuestObjectives = Magnify.GetMapster("questObjectives")
 		if (mapster) then
 			-- Sorry mapster I need to take the wheel
 			mapster.WorldMapFrame_DisplayQuestPOI = function() end
 		end
-		if x ~= nil and y ~= nil then
-			-- Use mapsterPoiScale if available (default 1)
-			local effectivePoiScale = (mapsterPoiScale or 1)
-			local s = WORLDMAP_SETTINGS.size / WorldMapDetailFrame:GetEffectiveScale() * effectivePoiScale
 
-			local posX = x / s -- Simplified
-			local posY = y / s -- Simplified
+		local effectivePoiScale = (mapsterPoiScale or 1)
+		local posX, posY
+
+		-- Determine position based on mode
+		if mapsterQuestObjectives and mapsterQuestObjectives == 1 then
+			-- Mode 1 (Only WorldMap Blobs): Try to get position from normalized coordinates
+			local questId = poiButton.questId
+			if questId then
+				local _, normalizedX, normalizedY = QuestPOIGetIconInfo(questId)
+				if normalizedX and normalizedY then
+					-- Calculate pixel position from normalized coords
+					posX = normalizedX * WorldMapDetailFrame:GetWidth() * WORLDMAP_SETTINGS.size
+					posY = -normalizedY * WorldMapDetailFrame:GetHeight() * WORLDMAP_SETTINGS.size
+				end
+			end
+			-- Fallback to existing position if normalized coords not available
+			if not posX and x ~= nil and y ~= nil then
+				posX = x
+				posY = y
+			end
+		elseif x ~= nil and y ~= nil then
+			-- Modes 0 and 2: Use existing position
+			posX = x
+			posY = y
+		end
+
+		-- Apply scale and position transformation
+		if posX and posY then
+			local s = WORLDMAP_SETTINGS.size / WorldMapDetailFrame:GetEffectiveScale() * effectivePoiScale
+			posX = posX / s
+			posY = posY / s
 			poiButton:SetScale(s)
 			poiButton:SetPoint("CENTER", poiButton:GetParent(), "TOPLEFT", posX, posY)
 
