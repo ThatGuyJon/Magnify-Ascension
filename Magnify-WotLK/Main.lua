@@ -219,8 +219,8 @@ end
 
 function Magnify.SetupWorldMapFrame()
 	WorldMapScrollFrameScrollBar:Hide()
-	WorldMapFrame:EnableMouse(true)
-	WorldMapScrollFrame:EnableMouse(true)
+	-- WorldMapFrame:EnableMouse(true) -- Commented out: protected function
+	-- WorldMapScrollFrame:EnableMouse(true) -- Commented out: protected function
 	WorldMapScrollFrame.panning = false
 	WorldMapScrollFrame.moved = false
 
@@ -361,15 +361,13 @@ function Magnify.WorldMapButton_OnUpdate(self, elapsed)
 		local scale = WorldMapDetailFrame:GetScale()
 		WorldMapPlayer:ClearAllPoints()
 		WorldMapPlayer:SetPoint("CENTER", WorldMapDetailFrame, "TOPLEFT", playerX * detailWidth * scale, -playerY * detailHeight * scale)
-		-- Position PlayerArrowFrame to match WorldMapPlayer
+		
+		-- Hide PlayerArrowFrame and PlayerArrowEffectFrame to prevent double arrow in Ascension
 		if PlayerArrowFrame then
-			PlayerArrowFrame:ClearAllPoints()
-			PlayerArrowFrame:SetPoint("CENTER", WorldMapDetailFrame, "TOPLEFT", playerX * detailWidth * scale, -playerY * detailHeight * scale)
+			PlayerArrowFrame:Hide()
 		end
-		-- Position PlayerArrowEffectFrame to match WorldMapPlayer
 		if PlayerArrowEffectFrame then
-			PlayerArrowEffectFrame:ClearAllPoints()
-			PlayerArrowEffectFrame:SetPoint("CENTER", WorldMapDetailFrame, "TOPLEFT", playerX * detailWidth * scale, -playerY * detailHeight * scale)
+			PlayerArrowEffectFrame:Hide()
 		end
 
 		-- Hide default player texture every frame to ensure no duplicate
@@ -568,6 +566,16 @@ function Magnify.OnFirstLoad()
 	end
 	if WorldMapPlayer.texture then
 		WorldMapPlayer.texture:Hide()
+	end
+	
+	-- Hide PlayerArrowFrame and PlayerArrowEffectFrame to prevent double arrow in Ascension
+	if PlayerArrowFrame then
+		PlayerArrowFrame:Hide()
+		PlayerArrowFrame.Show = function() end
+	end
+	if PlayerArrowEffectFrame then
+		PlayerArrowEffectFrame:Hide()
+		PlayerArrowEffectFrame.Show = function() end
 	end
 
 	hooksecurefunc("WorldMapFrame_SetFullMapView", Magnify.SetupWorldMapFrame);
