@@ -12,6 +12,8 @@ Magnify is a World of Warcraft WotLK (3.3.5a) add-on which allows the user to zo
 # Fixes
 - :white_check_mark: Corrected issues to make work with Ascension Servers
 - :white_check_mark: Additional issues correct by Bandit Tech to show level ranges on zones
+- :white_check_mark: Majed Fixed the "ghost" player arrow that was occurring
+
 
 # How to install
  * Click the green Code button near the top right, then select Download ZIP.
